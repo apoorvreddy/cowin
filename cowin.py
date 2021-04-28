@@ -17,15 +17,15 @@ import requests
 
 hold = "**********************************************"
 #pincode you want to fetch results for
-pincode = "560034"
+pincode = "xxxxxxxx"
 #your phone number
-mobile = "77xxxx"
+mobile = "xxxxxxx"
 host = "https://cdn-api.co-vin.in"
 
 def generate_otp(mobile):
     url = "/api/v2/auth/generateMobileOTP"
     #get secret from your browser session
-    secret = "xxxxxxxxxxxxx"
+    secret = "xxxxxxxxxxx"
     raw_data = { "secret" : secret, "mobile" : mobile}
 
     resp = requests.post( host + url, json = raw_data)
@@ -43,13 +43,14 @@ def get_slots(token, pincode):
     tomorrow = datetime.date.today() + datetime.timedelta(days=2)
     query_date = tomorrow.strftime("%d-%m-%Y")
     url = "/api/v2/appointment/sessions/calendarByPin?pincode=" + pincode + "&date=" + query_date
-    bearer_token = "bearer " +  token
+    bearer_token = "Bearer " +  token
     headers = {"authorization": bearer_token}
 
     resp = requests.get(host + url, headers = headers)
-    print(resp.json())
+    #print(resp.json())
     return resp
 
+#debug_mode()
 print("Generating OTP for: ", mobile)
 print(hold)
 resp = generate_otp(mobile)
@@ -74,7 +75,7 @@ if resp.status_code != 200:
     print("Failed to get slots. Going to exit")
     sys.exit()
 
-for center in slots["centers"]:
+for center in resp.json()["centers"]:
     center_name = center['name']
     sessions = center['sessions']
     is_min_age_45 = all( 45 == session['min_age_limit'] for session in sessions)
