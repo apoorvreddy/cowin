@@ -1,6 +1,32 @@
 #!/bin/python3
 import logging
 from http.client import HTTPConnection  # py3
+import argparse
+import datetime
+import hashlib
+import sys
+import requests
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--search_all',
+                    help="Search all districts in India ?",
+                    type=bool,
+                    default=False)
+parser.add_argument('--d',
+                    help="Within how many days do you want to be vaccinated",
+                    type=int,
+                    default=7)
+parser.add_argument('--pincode',
+                    help="Search within this particular pincode",
+                    type=str,
+                    default="xxxx")
+parser.add_argument('--mobile',
+                    help="Your Mobile Number",
+                    type=str,
+                    default="xxxxxx")
+args = parser.parse_args()
+
 
 def debug_mode():
     log = logging.getLogger('urllib3')
@@ -10,18 +36,13 @@ def debug_mode():
     log.addHandler(ch)
     HTTPConnection.debuglevel = 1
 
-import datetime
-import hashlib
-import sys
-import requests
-
 hold = "**********************************************"
 # search all pincodes
-SEARCH_ALL = True
+SEARCH_ALL = args.search_all
 #pincode you want to fetch results for
-pincode = "xxxx"
+pincode = args.pincode
 #your phone number
-mobile = "xxxxxx"
+mobile = args.mobile
 host = "https://cdn-api.co-vin.in"
 
 def generate_otp(mobile):
