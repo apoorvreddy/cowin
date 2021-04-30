@@ -16,16 +16,18 @@ import sys
 import requests
 
 hold = "**********************************************"
+# search all pincodes
+SEARCH_ALL = True
 #pincode you want to fetch results for
-pincode = "xxxxxxxx"
+pincode = "xxxx"
 #your phone number
-mobile = "xxxxxxx"
+mobile = "xxxxxx"
 host = "https://cdn-api.co-vin.in"
 
 def generate_otp(mobile):
     url = "/api/v2/auth/generateMobileOTP"
     #get secret from your browser session
-    secret = "xxxxxxxxxxx"
+    secret = "xxxxx"
     raw_data = { "secret" : secret, "mobile" : mobile}
 
     resp = requests.post( host + url, json = raw_data)
@@ -50,7 +52,36 @@ def get_slots(token, pincode):
     #print(resp.json())
     return resp
 
+def get_slots_by_district(district_id):
+    tomorrow = datetime.date.today() + datetime.timedelta(days=2)
+    query_date = tomorrow.strftime("%d-%m-%Y")
+    url = "/api/v2/appointment/sessions/public/calendarByDistrict?district_id=" + str(district_id) + "&date=" + query_date
+
+    resp = requests.get(host + url)
+    return resp
+
+def parse_centers_response(resp):
+    for center in resp.json()["centers"]:
+       center_name = center['name']
+       sessions = center['sessions']
+       is_min_age_45 = all( 45 == session['min_age_limit'] for session in sessions)
+       if is_min_age_45:
+           print(center_name, "-----", 'No Slots Found')
+       else:
+           print(center_name, "YYYYY", 'SLOT FOUND!!!')
+
+
 #debug_mode()
+
+# Search all districts
+if SEARCH_ALL:
+    district_list = list(range(1, 501))
+    for district in district_list:
+        resp = get_slots_by_district(district)
+        parse_centers_response(resp)
+    sys.exit(0)
+
+
 print("Generating OTP for: ", mobile)
 print(hold)
 resp = generate_otp(mobile)
@@ -74,13 +105,4 @@ resp = get_slots(token, pincode)
 if resp.status_code != 200:
     print("Failed to get slots. Going to exit")
     sys.exit()
-
-for center in resp.json()["centers"]:
-    center_name = center['name']
-    sessions = center['sessions']
-    is_min_age_45 = all( 45 == session['min_age_limit'] for session in sessions)
-    if is_min_age_45:
-        print(center_name, "-----", 'No Slots Found')
-    else:
-        print(center_name, "YYYYY", 'SLOT FOUND!!!')
 
