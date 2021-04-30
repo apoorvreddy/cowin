@@ -105,4 +105,4 @@ resp = get_slots(token, pincode)
 if resp.status_code != 200:
     print("Failed to get slots. Going to exit")
     sys.exit()
-
+parse_centers_response(resp)
