@@ -14,7 +14,7 @@ parser.add_argument('--search_all',
                     type=bool,
                     default=False)
 parser.add_argument('--d',
-                    help="Within how many days do you want to be vaccinated",
+                    help="How many days from today do you want to be vaccinated",
                     type=int,
                     default=7)
 parser.add_argument('--pincode',
@@ -25,7 +25,11 @@ parser.add_argument('--mobile',
                     help="Your Mobile Number",
                     type=str,
                     default="xxxxxx")
+parser.add_argument('--secret',
+                    help="Secret from your browser session")
 args = parser.parse_args()
+
+
 
 
 def debug_mode():
@@ -73,8 +77,8 @@ def get_slots(token, pincode):
     #print(resp.json())
     return resp
 
-def get_slots_by_district(district_id):
-    tomorrow = datetime.date.today() + datetime.timedelta(days=2)
+def get_slots_by_district(district_id, days_from_now):
+    tomorrow = datetime.date.today() + datetime.timedelta(days=days_from_now)
     query_date = tomorrow.strftime("%d-%m-%Y")
     url = "/api/v2/appointment/sessions/public/calendarByDistrict?district_id=" + str(district_id) + "&date=" + query_date
 
@@ -82,14 +86,18 @@ def get_slots_by_district(district_id):
     return resp
 
 def parse_centers_response(resp):
-    for center in resp.json()["centers"]:
-       center_name = center['name']
-       sessions = center['sessions']
-       is_min_age_45 = all( 45 == session['min_age_limit'] for session in sessions)
-       if is_min_age_45:
-           print(center_name, "-----", 'No Slots Found')
-       else:
-           print(center_name, "YYYYY", 'SLOT FOUND!!!')
+    centers = resp.json()["centers"]
+    if len(centers) > 0:
+        for center in resp.json()["centers"]:
+           center_name = center['name']
+           sessions = center['sessions']
+           is_min_age_45 = all( 45 == session['min_age_limit'] for session in sessions)
+           if is_min_age_45:
+               print(center_name, "-----", 'No Slots Found')
+           else:
+               print(center_name, "YYYYY", 'SLOT FOUND!!!')
+    else:
+        print("No Centers Found in Your pincode")
 
 
 #debug_mode()
@@ -98,7 +106,7 @@ def parse_centers_response(resp):
 if SEARCH_ALL:
     district_list = list(range(1, 501))
     for district in district_list:
-        resp = get_slots_by_district(district)
+        resp = get_slots_by_district(district, args.d)
         parse_centers_response(resp)
     sys.exit(0)
 
